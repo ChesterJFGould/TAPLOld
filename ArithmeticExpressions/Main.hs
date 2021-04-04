@@ -20,26 +20,18 @@ isNumericValue (S t) = isNumericValue t
 isNumericValue (P t) = isNumericValue t
 isNumericValue _ = False
 
-isValue :: Term -> Bool
-isValue T = True
-isValue F = True
-isValue t = isNumericValue t
-
-step :: Term -> Maybe Term
-step (If T c _) = Just c
-step (If F _ a) = Just a
-step (If p c a) = step p >>= (\p -> return $ If p c a)
-step (S t) = step t >>= (return . S)
-step (P Z) = Just Z
-step (P (S t)) = if isNumericValue t then Just t else Nothing
-step (P t) = step t >>= (return . P)
-step (IsZ Z) = Just T
-step (IsZ (S _)) = Just F
-step (IsZ t) = step t >>= (return . IsZ)
-step _ = Nothing
-
 eval :: Term -> Term
-eval t = maybe t eval $ step t
+eval (If T c _) = eval c
+eval (If F _ a) = eval a
+eval (If p c a) = eval (If (eval p) c a)
+eval (S t) = S (eval t)
+eval (P Z) = Z
+eval (P (S t)) = if isNumericValue t then eval t else P (S t)
+eval (P t) = P (eval t)
+eval (IsZ Z) = T
+eval (IsZ (S _)) = F
+eval (IsZ t) = eval $ IsZ $ eval t
+eval t = t
 
 numericTermToInt :: Term -> Int
 numericTermToInt Z = 0
