@@ -61,19 +61,9 @@ fun = succf <|> predf <|> iszerof
 succf = string "succ" >> (S <$> term)
 predf = string "pred" >> (P <$> term)
 iszerof = string "iszero" >> (IsZ <$> term)
-ifs = do
-      string "if"
-      space1
-      pred <- term
-      space1
-      string "then"
-      space1
-      cons <- term
-      space1
-      string "else"
-      space1
-      alt <- term
-      return $ If pred cons alt
+ifs = If <$> (string "if" >> space1 *> term <* space1)
+         <*> (string "then" >> space1 *> term <* space1)
+         <*> (string "else" >> space1 >> term)
 
 main :: IO ()
 main = do
