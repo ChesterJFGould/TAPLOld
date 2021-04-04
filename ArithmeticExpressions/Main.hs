@@ -3,7 +3,6 @@ module Main where
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import Data.Void
-import System.Environment
 
 data Term = T
           | F
@@ -27,7 +26,7 @@ eval (If p c a) = eval (If (eval p) c a)
 eval (S t) = S (eval t)
 eval (P Z) = Z
 eval (P (S t)) = if isNumericValue t then eval t else P (S t)
-eval (P t) = P (eval t)
+eval (P t) = eval $ P $ eval t
 eval (IsZ Z) = T
 eval (IsZ (S _)) = F
 eval (IsZ t) = eval $ IsZ $ eval t
@@ -35,7 +34,7 @@ eval t = t
 
 numericTermToInt :: Term -> Int
 numericTermToInt Z = 0
-numericTermToInt (S t) = 1 + (numericTermToInt t)
+numericTermToInt (S t) = (numericTermToInt t) + 1;
 
 termToString :: Term -> String
 termToString T = "true"
