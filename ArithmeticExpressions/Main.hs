@@ -43,9 +43,6 @@ termToString t
              | isNumericValue t = show $ numericTermToInt t
              | otherwise = show t
 
-parseTerm :: String -> Either (ParseErrorBundle String Void) Term
-parseTerm = parse term ""
-
 parseTerms :: String -> Either (ParseErrorBundle String Void) [Term]
 parseTerms = parse terms ""
 
