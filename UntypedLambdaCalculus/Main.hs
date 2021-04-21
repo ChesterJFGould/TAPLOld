@@ -43,25 +43,25 @@ eval (App f a) = eval $ App (eval f) a
 eval t = t
 
 parseTerms :: String -> Either (ParseErrorBundle String Void) [Term]
-parseTerms input = S.evalState (runParserT nterms "" input) []
+parseTerms input = S.evalState (runParserT terms "" input) []
 
 pos :: String -> [String] -> Maybe Int
 pos = walk 0
       where walk _ _ [] = Nothing
             walk n a (b : rest) = iff (a == b) (return n) (walk (n + 1) a rest)
 
-nterms :: ParsecT Void String (S.State [String]) [Term]
-nterms = sepEndBy nterm (space *> char ';' <* space)
-nterm = space >> (expr <|> parens)
+terms :: ParsecT Void String (S.State [String]) [Term]
+terms = sepEndBy term (space *> char ';' <* space)
+term = space >> (expr <|> parens)
 parens = char '(' *> expr <* char ')'
-expr = napp <|> val
-napp = chainl1 (space >> (parens <|> val)) (return App)
-val = nlam <|> nvar
-nlam = do
+expr = app <|> val
+app = chainl1 (space >> (parens <|> val)) (return App)
+val = lam <|> var
+lam = do
        var <- string "lambda" >> space1 *> (some $ noneOf " \n\t\r.()") <* char '.'
        s <- S.get
-       (Lam var <$> (S.modify (var :) >> nterm)) <* S.put s
-nvar = do
+       (Lam var <$> (S.modify (var :) >> term)) <* S.put s
+var = do
        var <- some $ noneOf " \n\t\r.();"
        pos <- S.gets (pos var)
        maybe (fail $ "Cannot parse free variable " ++ var) (pure . Var) pos
@@ -70,5 +70,5 @@ main :: IO [()]
 main = do
        getContents >>= (sequence
                         . either ((: []) . putStrLn . errorBundlePretty)
-                                 (map (putStrLn . (maybe "Term contains free variable" id) .showTerm . eval))
+                                 (map (putStrLn . (maybe "Term contains free variable" id) . showTerm . eval))
                         . parseTerms)
